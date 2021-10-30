@@ -69,6 +69,15 @@ ${getReleaseNotesDetailsMessage(distribution.version)}
         markerFile.exists()
     }
 
+    def "abort rendering welcome message using configuration property"() {
+        when:
+        file("gradle.properties") << "org.gradle.hideWelcomeMessage=true"
+        succeeds()
+
+        then:
+        outputDoesNotContain(welcomeMessage)
+    }
+
     def "when debug logging is enabled, debug warning is logged first"() {
         given:
         def expectedWarning = """

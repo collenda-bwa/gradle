@@ -99,6 +99,7 @@ public class StartParameter implements LoggingConfiguration, ParallelismConfigur
     private DependencyVerificationMode verificationMode = DependencyVerificationMode.STRICT;
     private boolean isRefreshKeys;
     private boolean isExportKeys;
+    private boolean hideWelcomeMessage;
 
     /**
      * {@inheritDoc}
@@ -936,5 +937,25 @@ public class StartParameter implements LoggingConfiguration, ParallelismConfigur
      */
     public void setExportKeys(boolean exportKeys) {
         isExportKeys = exportKeys;
+    }
+
+    /**
+     * If true, will hide welcome message.
+     *
+     * @return true if welcome message should be hidden
+     * @since 7.4
+     */
+    public boolean isHideWelcomeMessage() {
+        return hideWelcomeMessage;
+    }
+
+    /**
+     * Controls weather gradle welcome message will be shown on startup.
+     *
+     * @param hideWelcomeMessage set to true to hide welcome message
+     * @since 7.4
+     */
+    public void setHideWelcomeMessage(boolean hideWelcomeMessage) {
+        this.hideWelcomeMessage = hideWelcomeMessage;
     }
 }

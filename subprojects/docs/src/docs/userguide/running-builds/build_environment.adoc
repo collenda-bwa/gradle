@@ -117,6 +117,10 @@ When set to `all` or `full`, a stacktrace is present in the output for all excep
 Using `full` doesn't truncate the stacktrace, which leads to a much more verbose output.
 _Default is `internal`._
 
+`org.gradle.hideWelcomeMessage=(true,false)`::
+When set to `true`, Gradle won't generate welcome message.
+_Disabled by default and welcome message is shown on first execution of each new version of Gradle._
+
 The following example demonstrates usage of various properties.
 
 .Setting properties with a gradle.properties file

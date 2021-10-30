@@ -212,6 +212,8 @@ public class DefaultCommandLineActionFactory implements CommandLineActionFactory
             parser.allowUnknownOptions();
             parser.allowMixedSubcommandsAndOptions();
 
+            AllProperties properties = null;
+
             try {
                 ParsedCommandLine parsedCommandLine = parser.parse(args);
                 InitialProperties initialProperties = propertiesConverter.convert(parsedCommandLine);
@@ -220,7 +222,7 @@ public class DefaultCommandLineActionFactory implements CommandLineActionFactory
                 buildLayout = buildLayoutConverter.convert(initialProperties, parsedCommandLine, null);
 
                 // Read *.properties files
-                AllProperties properties = layoutToPropertiesConverter.convert(initialProperties, buildLayout);
+                properties = layoutToPropertiesConverter.convert(initialProperties, buildLayout);
 
                 // Calculate the logging configuration
                 loggingBuildOptions.convert(parsedCommandLine, properties, loggingConfiguration);
@@ -235,7 +237,7 @@ public class DefaultCommandLineActionFactory implements CommandLineActionFactory
                 Action<ExecutionListener> exceptionReportingAction =
                     new ExceptionReportingAction(reporter, loggingManager,
                         new NativeServicesInitializingAction(buildLayout, loggingConfiguration, loggingManager,
-                            new WelcomeMessageAction(buildLayout,
+                            new WelcomeMessageAction(buildLayout, properties,
                                 new DebugLoggerWarningAction(loggingConfiguration, action))));
                 exceptionReportingAction.execute(executionListener);
             } finally {

@@ -23,8 +23,10 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.initialization.StartParameterBuildOptions.HideWelcomeMessageOption;
 import org.gradle.internal.IoActions;
 import org.gradle.launcher.bootstrap.ExecutionListener;
+import org.gradle.launcher.configuration.AllProperties;
 import org.gradle.launcher.configuration.BuildLayoutResult;
 import org.gradle.util.internal.GFileUtils;
 import org.gradle.util.GradleVersion;
@@ -41,10 +43,11 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
     private final BuildLayoutResult buildLayout;
     private final GradleVersion gradleVersion;
     private final Function<String, InputStream> inputStreamProvider;
+    private final AllProperties properties;
     private final Action<ExecutionListener> action;
 
-    WelcomeMessageAction(BuildLayoutResult buildLayout, Action<ExecutionListener> action) {
-        this(Logging.getLogger(WelcomeMessageAction.class), buildLayout, GradleVersion.current(), new Function<String, InputStream>() {
+    WelcomeMessageAction(BuildLayoutResult buildLayout, AllProperties properties, Action<ExecutionListener> action) {
+        this(Logging.getLogger(WelcomeMessageAction.class), buildLayout, properties, GradleVersion.current(), new Function<String, InputStream>() {
             @Nullable
             @Override
             public InputStream apply(@Nullable String input) {
@@ -54,17 +57,18 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
     }
 
     @VisibleForTesting
-    WelcomeMessageAction(Logger logger, BuildLayoutResult buildLayout, GradleVersion gradleVersion, Function<String, InputStream> inputStreamProvider, Action<ExecutionListener> action) {
+    WelcomeMessageAction(Logger logger, BuildLayoutResult buildLayout, AllProperties properties, GradleVersion gradleVersion, Function<String, InputStream> inputStreamProvider, Action<ExecutionListener> action) {
         this.logger = logger;
         this.buildLayout = buildLayout;
         this.gradleVersion = gradleVersion;
         this.inputStreamProvider = inputStreamProvider;
+        this.properties = properties;
         this.action = action;
     }
 
     @Override
     public void execute(ExecutionListener executionListener) {
-        if (isWelcomeMessageEnabled()) {
+        if (isWelcomeMessageEnabled() && !isHiddenByUser()) {
             File markerFile = getMarkerFile();
 
             if (!markerFile.exists() && logger.isLifecycleEnabled()) {
@@ -104,6 +108,11 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
         }
 
         return Boolean.parseBoolean(messageEnabled);
+    }
+
+    private boolean isHiddenByUser() {
+        return properties != null
+            && Boolean.parseBoolean(properties.getProperties().get(HideWelcomeMessageOption.PROPERTY_NAME));
     }
 
     private File getMarkerFile() {
