@@ -71,7 +71,7 @@ ${getReleaseNotesDetailsMessage(distribution.version)}
 
     def "abort rendering welcome message using configuration property"() {
         when:
-        file("gradle.properties") << "org.gradle.hideWelcomeMessage=true"
+        file("gradle.properties") << "org.gradle.welcome-message=false"
         succeeds()
 
         then:

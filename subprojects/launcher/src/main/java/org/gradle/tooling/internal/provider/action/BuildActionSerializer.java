@@ -148,7 +148,7 @@ public class BuildActionSerializer {
             encoder.writeString(startParameter.getDependencyVerificationMode().name());
             encoder.writeBoolean(startParameter.isRefreshKeys());
             encoder.writeBoolean(startParameter.isExportKeys());
-            encoder.writeBoolean(startParameter.isHideWelcomeMessage());
+            encoder.writeBoolean(startParameter.isShowWelcomeMessage());
         }
 
         private void writeTaskRequests(Encoder encoder, List<TaskExecutionRequest> taskRequests) throws Exception {
@@ -231,7 +231,7 @@ public class BuildActionSerializer {
             startParameter.setDependencyVerificationMode(DependencyVerificationMode.valueOf(decoder.readString()));
             startParameter.setRefreshKeys(decoder.readBoolean());
             startParameter.setExportKeys(decoder.readBoolean());
-            startParameter.setHideWelcomeMessage(decoder.readBoolean());
+            startParameter.setShowWelcomeMessage(decoder.readBoolean());
 
             return startParameter;
         }

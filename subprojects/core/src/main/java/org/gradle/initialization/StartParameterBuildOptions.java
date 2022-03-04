@@ -79,7 +79,7 @@ public class StartParameterBuildOptions extends BuildOptionSet<StartParameterInt
         options.add(new ConfigurationCacheMaxProblemsOption());
         options.add(new ConfigurationCacheRecreateOption());
         options.add(new ConfigurationCacheQuietOption());
-        options.add(new HideWelcomeMessageOption());
+        options.add(new WelcomeMessageOption());
         StartParameterBuildOptions.options = Collections.unmodifiableList(options);
     }
 
@@ -566,17 +566,17 @@ public class StartParameterBuildOptions extends BuildOptionSet<StartParameterInt
         }
     }
 
-    public static class HideWelcomeMessageOption extends BooleanBuildOption<StartParameterInternal> {
+    public static class WelcomeMessageOption extends BooleanBuildOption<StartParameterInternal> {
 
-        public static final String PROPERTY_NAME = "org.gradle.hideWelcomeMessage";
+        public static final String PROPERTY_NAME = "org.gradle.welcome-message";
 
-        public HideWelcomeMessageOption() {
+        public WelcomeMessageOption() {
             super(PROPERTY_NAME);
         }
 
         @Override
         public void applyTo(boolean value, StartParameterInternal settings, Origin origin) {
-            settings.setHideWelcomeMessage(value);
+            settings.setShowWelcomeMessage(value);
         }
     }
 }

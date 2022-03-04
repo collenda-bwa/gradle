@@ -23,7 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.initialization.StartParameterBuildOptions.HideWelcomeMessageOption;
+import org.gradle.initialization.StartParameterBuildOptions.WelcomeMessageOption;
 import org.gradle.internal.IoActions;
 import org.gradle.launcher.bootstrap.ExecutionListener;
 import org.gradle.launcher.configuration.AllProperties;
@@ -68,7 +68,7 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
 
     @Override
     public void execute(ExecutionListener executionListener) {
-        if (isWelcomeMessageEnabled() && !isHiddenByUser()) {
+        if (isEnabledBySystemProperty() && isEnabledByGradleProperty()) {
             File markerFile = getMarkerFile();
 
             if (!markerFile.exists() && logger.isLifecycleEnabled()) {
@@ -100,7 +100,7 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
      * The system property is set for the purpose of internal testing.
      * In user environments the system property will never be available.
      */
-    private boolean isWelcomeMessageEnabled() {
+    private boolean isEnabledBySystemProperty() {
         String messageEnabled = System.getProperty(DefaultCommandLineActionFactory.WELCOME_MESSAGE_ENABLED_SYSTEM_PROPERTY);
 
         if (messageEnabled == null) {
@@ -110,9 +110,14 @@ class WelcomeMessageAction implements Action<ExecutionListener> {
         return Boolean.parseBoolean(messageEnabled);
     }
 
-    private boolean isHiddenByUser() {
-        return properties != null
-            && Boolean.parseBoolean(properties.getProperties().get(HideWelcomeMessageOption.PROPERTY_NAME));
+    private boolean isEnabledByGradleProperty() {
+        if (properties != null) {
+            String messageEnabled = properties.getProperties().get(WelcomeMessageOption.PROPERTY_NAME);
+            if (messageEnabled != null) {
+                return Boolean.parseBoolean(messageEnabled);
+            }
+        }
+        return true;
     }
 
     private File getMarkerFile() {
