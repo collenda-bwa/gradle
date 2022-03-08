@@ -18,9 +18,7 @@ package org.gradle.api.tasks.diagnostics
 
 import org.gradle.api.JavaVersion
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.ToBeFixedForConfigurationCache
 import org.gradle.integtests.fixtures.resolve.ResolveTestFixture
-import spock.lang.Unroll
 
 class DependencyInsightReportVariantDetailsIntegrationTest extends AbstractIntegrationSpec {
     def setup() {
@@ -31,8 +29,6 @@ class DependencyInsightReportVariantDetailsIntegrationTest extends AbstractInteg
         new ResolveTestFixture(buildFile).addDefaultVariantDerivationStrategy()
     }
 
-    @Unroll
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "shows selected variant details"() {
         given:
         settingsFile << "include 'a', 'b', 'c'"
@@ -74,7 +70,6 @@ project :$expectedProject
         'runtimeClasspath' | 'c'             | 'runtimeElements' | 'org.gradle.usage               = java-runtime\n      org.gradle.libraryelements     = jar'
     }
 
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "shows published variant details"() {
         given:
         mavenRepo.with {
@@ -127,7 +122,6 @@ org.test:leaf:1.0
 """
     }
 
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "Asking for variant details of 'FAILED' modules doesn't break the report"() {
         given:
         mavenRepo.module("org", "top").dependsOnModules("middle").publish()
@@ -159,7 +153,6 @@ org:middle:1.0 FAILED
 """
     }
 
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "shows the target configuration name as variant display name for external dependencies which are not variant-aware"() {
         given:
         def leaf = mavenRepo.module('org', 'leaf', '1.0').publish()
@@ -200,7 +193,6 @@ org:leaf:1.0
 """
     }
 
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "shows missing attributes when the target variant doesn't have any of its own"() {
         given:
         def leaf = mavenRepo.module('org', 'leaf', '1.0').publish()
@@ -244,7 +236,6 @@ org:leaf:1.0
 """
     }
 
-    @ToBeFixedForConfigurationCache(because = ":dependencyInsight")
     def "correctly reports attributes declared on dependencies"() {
         given:
         mavenRepo.module('org', 'testA', '1.0').publish()

@@ -17,6 +17,13 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        maven {
+            name = "Kotlin EAP repository"
+            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
+            content {
+                includeVersionByRegex("org.jetbrains.kotlin", "kotlin-.*", "1.7.0-dev-1904")
+            }
+        }
     }
 }
 
@@ -37,6 +44,13 @@ dependencyResolutionManagement {
             url = uri("https://repo.gradle.org/gradle/public")
             content {
                 includeModule("classycle", "classycle")
+            }
+        }
+        maven {
+            name = "Kotlin EAP repository"
+            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
+            content {
+                includeVersionByRegex("org.jetbrains.kotlin", "kotlin-.*", "1.7.0-dev-1904")
             }
         }
         mavenCentral()
@@ -84,21 +98,3 @@ include("packaging")
 include("performance-testing")
 include("profiling")
 include("publishing")
-
-fun remoteBuildCacheEnabled(settings: Settings) = settings.buildCache.remote?.isEnabled == true
-
-fun isAdoptOpenJDK() = true == System.getProperty("java.vendor")?.contains("AdoptOpenJDK")
-
-fun isAdoptOpenJDK11() = isAdoptOpenJDK() && JavaVersion.current().isJava11
-
-fun getBuildJavaHome() = System.getProperty("java.home")
-
-gradle.settingsEvaluated {
-    if ("true" == System.getProperty("org.gradle.ignoreBuildJavaVersionCheck")) {
-        return@settingsEvaluated
-    }
-
-    if (remoteBuildCacheEnabled(this) && !isAdoptOpenJDK11()) {
-        throw GradleException("Remote cache is enabled, which requires AdoptOpenJDK 11 to perform this build. It's currently ${getBuildJavaHome()}.")
-    }
-}

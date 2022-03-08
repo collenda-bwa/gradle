@@ -21,7 +21,7 @@ import gradlebuild.modules.model.License
 abstract class ExternalModulesExtension {
 
     val groovyVersion = "3.0.9"
-    val kotlinVersion = "1.5.31"
+    val kotlinVersion = "1.6.10"
 
     fun futureKotlin(module: String) = "org.jetbrains.kotlin:kotlin-$module:$kotlinVersion"
 
@@ -33,6 +33,7 @@ abstract class ExternalModulesExtension {
     val asmCommons = "org.ow2.asm:asm-commons"
     val asmTree = "org.ow2.asm:asm-tree"
     val asmUtil = "org.ow2.asm:asm-util"
+    val assertj = "org.assertj:assertj-core"
     val awsS3Core = "com.amazonaws:aws-java-sdk-core"
     val awsS3Kms = "com.amazonaws:aws-java-sdk-kms"
     val awsS3S3 = "com.amazonaws:aws-java-sdk-s3"
@@ -95,6 +96,7 @@ abstract class ExternalModulesExtension {
     val julToSlf4j = "org.slf4j:jul-to-slf4j"
     val junit = "junit:junit"
     val junit5Vintage = "org.junit.vintage:junit-vintage-engine"
+    val junit5JupiterApi = "org.junit.jupiter:junit-jupiter-api"
     val junitPlatform = "org.junit.platform:junit-platform-launcher"
     val jzlib = "com.jcraft:jzlib"
     val kryo = "com.esotericsoftware.kryo:kryo"
@@ -121,6 +123,7 @@ abstract class ExternalModulesExtension {
     val testng = "org.testng:testng"
     val tomlj = "org.tomlj:tomlj"
     val trove4j = "org.jetbrains.intellij.deps:trove4j"
+    val jna = "net.java.dev.jna:jna"
     val agp = "com.android.tools.build:gradle"
     val xbeanReflect = "org.apache.xbean:xbean-reflect"
     val xerces = "xerces:xercesImpl"
@@ -179,6 +182,7 @@ abstract class ExternalModulesExtension {
         asmCommons to License.BSD3,
         asmTree to License.BSD3,
         asmUtil to License.BSD3,
+        assertj to License.Apache2,
         awsS3Core to License.Apache2,
         awsS3Kms to License.Apache2,
         awsS3S3 to License.Apache2,
@@ -229,6 +233,7 @@ abstract class ExternalModulesExtension {
         julToSlf4j to License.MIT,
         junit to License.EPL,
         junit5Vintage to License.EPL,
+        junit5JupiterApi to License.EPL,
         junitPlatform to License.EPL,
         jzlib to License.BSDStyle,
         kryo to License.BSD3,

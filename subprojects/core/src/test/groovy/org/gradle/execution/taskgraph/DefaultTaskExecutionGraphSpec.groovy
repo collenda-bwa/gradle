@@ -611,7 +611,7 @@ class DefaultTaskExecutionGraphSpec extends AbstractExecutionPlanSpec {
     }
 
     private DefaultExecutionPlan newExecutionPlan() {
-        return new DefaultExecutionPlan(Path.ROOT.toString(), taskNodeFactory, dependencyResolver, nodeValidator, new ExecutionNodeAccessHierarchy(CASE_SENSITIVE, Stub(Stat)), new ExecutionNodeAccessHierarchy(CASE_SENSITIVE, Stub(Stat)))
+        return new DefaultExecutionPlan(Path.ROOT.toString(), taskNodeFactory, dependencyResolver, nodeValidator, new ExecutionNodeAccessHierarchy(CASE_SENSITIVE, Stub(Stat)), new ExecutionNodeAccessHierarchy(CASE_SENSITIVE, Stub(Stat)), new DefaultResourceLockCoordinationService())
     }
 
     def task(String name, Task... dependsOn = []) {
@@ -622,6 +622,7 @@ class DefaultTaskExecutionGraphSpec extends AbstractExecutionPlanSpec {
 
     def addDependencies(Task task, Task... dependsOn) {
         _ * task.taskDependencies >> taskDependencyResolvingTo(task, dependsOn as List)
+        _ * task.lifecycleDependencies >> taskDependencyResolvingTo(task, dependsOn as List)
         _ * task.finalizedBy >> taskDependencyResolvingTo(task, [])
         _ * task.shouldRunAfter >> taskDependencyResolvingTo(task, [])
         _ * task.mustRunAfter >> taskDependencyResolvingTo(task, [])
@@ -638,6 +639,7 @@ class DefaultTaskExecutionGraphSpec extends AbstractExecutionPlanSpec {
             rethrowFailure() >> { throw failure }
         }
         _ * mock.taskDependencies >> Stub(TaskDependency)
+        _ * mock.lifecycleDependencies >> Stub(TaskDependency)
         _ * mock.finalizedBy >> Stub(TaskDependency)
         _ * mock.mustRunAfter >> Stub(TaskDependency)
         _ * mock.shouldRunAfter >> Stub(TaskDependency)

@@ -28,15 +28,16 @@ sealed class ConfigurationCacheFingerprint {
 
     data class GradleEnvironment(
         val gradleUserHomeDir: File,
-        val jvm: String
+        val jvm: String,
+        val startParameterProperties: Map<String, Any?>
     ) : ConfigurationCacheFingerprint()
 
     data class InitScripts(
         val fingerprints: List<InputFile>
     ) : ConfigurationCacheFingerprint()
 
-    data class TaskInputs(
-        val taskPath: String,
+    data class WorkInputs(
+        val workDisplayName: String,
         val fileSystemInputs: FileCollectionInternal,
         val fileSystemInputsFingerprint: HashCode
     ) : ConfigurationCacheFingerprint()
@@ -48,11 +49,6 @@ sealed class ConfigurationCacheFingerprint {
 
     data class ValueSource(
         val obtainedValue: ObtainedValue
-    ) : ConfigurationCacheFingerprint()
-
-    data class UndeclaredGradleProperty(
-        val key: String,
-        val value: String?
     ) : ConfigurationCacheFingerprint()
 
     data class UndeclaredSystemProperty(
@@ -87,9 +83,14 @@ sealed class ConfigurationCacheFingerprint {
             get() = "cached artifact information for $displayName has expired"
     }
 
-    data class ProjectSpecificInput(
-        val projectPath: String,
-        val value: ConfigurationCacheFingerprint
+    class SystemPropertiesPrefixedBy(
+        val prefix: String,
+        val snapshot: Map<String, String?>
+    ) : ConfigurationCacheFingerprint()
+
+    class EnvironmentVariablesPrefixedBy(
+        val prefix: String,
+        val snapshot: Map<String, String?>
     ) : ConfigurationCacheFingerprint()
 }
 

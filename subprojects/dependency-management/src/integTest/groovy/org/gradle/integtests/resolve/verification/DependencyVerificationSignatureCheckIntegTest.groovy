@@ -19,15 +19,17 @@ package org.gradle.integtests.resolve.verification
 import org.gradle.api.internal.artifacts.ivyservice.CacheLayout
 import org.gradle.integtests.fixtures.ToBeFixedForConfigurationCache
 import org.gradle.integtests.fixtures.UnsupportedWithConfigurationCache
+import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.security.fixtures.KeyServer
 import org.gradle.security.fixtures.SigningFixtures
 import org.gradle.security.internal.Fingerprint
-import spock.lang.Unroll
+import spock.lang.Issue
 
 import static org.gradle.security.fixtures.SigningFixtures.getValidPublicKeyLongIdHexString
 import static org.gradle.security.fixtures.SigningFixtures.signAsciiArmored
 import static org.gradle.security.fixtures.SigningFixtures.validPublicKeyHexString
 import static org.gradle.security.internal.SecuritySupport.toLongIdHexString
+import static org.gradle.util.Matchers.containsText
 
 class DependencyVerificationSignatureCheckIntegTest extends AbstractSignatureVerificationIntegrationTest {
 
@@ -87,7 +89,6 @@ class DependencyVerificationSignatureCheckIntegTest extends AbstractSignatureVer
         succeeds ":compileJava"
     }
 
-    @Unroll
     def "if signature is verified and checksum is declared in configuration, verify checksum (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -127,13 +128,18 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
-    def "fails verification is key is  (terse output=#terse)"() {
+    def "fails verification if key is (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
             verifySignatures()
@@ -172,13 +178,18 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
     @ToBeFixedForConfigurationCache
-    @Unroll
     def "can verify signature for artifacts downloaded in a previous build (stop in between = #stopInBetween)"() {
         given:
         terseConsoleOutput(false)
@@ -221,7 +232,6 @@ This can indicate that a dependency has been compromised. Please carefully verif
     }
 
     @ToBeFixedForConfigurationCache
-    @Unroll
     def "can verify classified artifacts downloaded in previous builds (stop in between = #stopInBetween)"() {
         def keyring = newKeyRing()
         keyServerFixture.registerPublicKey(keyring.publicKey)
@@ -268,8 +278,7 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
         stopInBetween << [false, true]
     }
 
-    @Unroll
-    def "fails verification is signature is incorrect (terse output=#terse)"() {
+    def "fails verification if signature is incorrect (terse output=#terse)"() {
         createMetadataFile {
             noMetadataVerification()
             keyServer(keyServerFixture.uri)
@@ -310,12 +319,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "doesn't check the same artifact multiple times during a build (terse output=#terse)"() {
         createMetadataFile {
             noMetadataVerification()
@@ -362,12 +376,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "doesn't check the same parent POM file multiple times during a build  (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -420,13 +439,18 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
-    def "fails verification is signature is not trusted (terse output=#terse)"() {
+    def "fails verification if signature is not trusted (terse output=#terse)"() {
         def keyring = newKeyRing()
         keyServerFixture.registerPublicKey(keyring.publicKey)
         def pkId = Fingerprint.of(keyring.publicKey)
@@ -468,12 +492,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 If the artifacts are trustworthy, you will need to update the gradle/verification-metadata.xml file by following the instructions at ${docsUrl}"""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "can verify classified artifacts trusting key #trustedKey"() {
         def keyring = newKeyRing()
         keyServerFixture.registerPublicKey(keyring.publicKey)
@@ -510,6 +539,12 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '$pkId' (test-user@gradle.com) and passed verification but the key isn't in your trusted keys list.
 
 If the artifacts are trustworthy, you will need to update the gradle/verification-metadata.xml file by following the instructions at ${docsUrl}"""
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         trustedKey << [
@@ -518,7 +553,6 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
         ]
     }
 
-    @Unroll
     def "reasonable error message if key server fails to answer (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -557,6 +591,12 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '14f53f0824875d73' but it wasn't found in any key server so it couldn't be verified
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
+        }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
         }
 
         where:
@@ -597,7 +637,6 @@ This can indicate that a dependency has been compromised. Please carefully verif
         secondServer.stop()
     }
 
-    @Unroll
     def "must verify all signatures (terse output=#terse)"() {
         def keyring = newKeyRing()
         keyServerFixture.withDefaultSigningKey()
@@ -641,12 +680,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 If the artifacts are trustworthy, you will need to update the gradle/verification-metadata.xml file by following the instructions at ${docsUrl}"""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "caches missing keys (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -685,6 +729,12 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         when: "publish keys"
         keyServerFixture.withDefaultSigningKey()
@@ -702,6 +752,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '14f53f0824875d73' but it wasn't found in any key server so it couldn't be verified
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
+        }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
         }
 
         when: "refreshes the keys"
@@ -744,6 +800,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '14f53f0824875d73' but it wasn't found in any key server so it couldn't be verified
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         when: "ignore key"
         replaceMetadataFile {
@@ -757,6 +819,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
         failure.assertHasCause """Dependency verification failed for configuration ':compileClasspath':
   - On artifact foo-1.0.jar (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata.
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata."""
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         when: "doesn't ignore key anymore"
         replaceMetadataFile {
@@ -770,6 +838,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.jar (org:foo:1.0) in repository 'maven': Artifact was signed with key '14f53f0824875d73' but it wasn't found in any key server so it couldn't be verified
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '14f53f0824875d73' but it wasn't found in any key server so it couldn't be verified
 """
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         when: "ignore key only for artifact"
         replaceMetadataFile {
@@ -785,13 +859,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.jar (org:foo:1.0) multiple problems reported:
       - in repository 'maven': artifact was signed but all keys were ignored
       - in repository 'maven': checksum is missing from verification metadata."""
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
 
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
     }
 
 
     // This test exercises the fact that the signature cache is aware
     // of changes of the artifact
-    @Unroll
     @ToBeFixedForConfigurationCache
     def "can detect tampered file between builds (terse output=#terse)"() {
         createMetadataFile {
@@ -846,7 +924,6 @@ This can indicate that a dependency has been compromised. Please carefully verif
     }
 
     @ToBeFixedForConfigurationCache
-    @Unroll
     def "caching takes trusted keys into account (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -900,7 +977,6 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
         terse << [true, false]
     }
 
-    @Unroll
     def "unsigned artifacts require checksum verification (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -940,12 +1016,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "can ignore a key and fallback to checksum verification (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -981,11 +1062,17 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.jar (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata.
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
+
         where:
         terse << [true, false]
     }
 
-    @Unroll
     def "can ignore a key using full fingerprint and fallback to checksum verification (terse output=#terse)"() {
         createMetadataFile {
             keyServer(keyServerFixture.uri)
@@ -1022,13 +1109,18 @@ This can indicate that a dependency has been compromised. Please carefully verif
   - On artifact foo-1.0.jar (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata.
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': checksum is missing from verification metadata."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
     }
 
-    @Unroll
-    def "can ignore a key for a specific artifact and fallback to checksum verification"() {
+    def "can ignore a key for a specific artifact and fallback to checksum verification (terse output=#terse)"() {
         // we tamper the jar, so the verification of the jar would fail, but not the POM
         keyServerFixture.withDefaultSigningKey()
         createMetadataFile {
@@ -1073,13 +1165,18 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
 
     }
 
-    @Unroll
     def "can ignore a key by long id for a specific artifact and fallback to checksum verification (terse output=#terse)"() {
         // we tamper the jar, so the verification of the jar would fail, but not the POM
         keyServerFixture.withDefaultSigningKey()
@@ -1125,6 +1222,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums."""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
@@ -1164,7 +1267,6 @@ This can indicate that a dependency has been compromised. Please carefully verif
         noExceptionThrown()
     }
 
-    @Unroll
     def "can collect multiple errors for single dependency (terse output=#terse)"() {
         def keyring = newKeyRing()
         keyServerFixture.registerPublicKey(keyring.publicKey)
@@ -1211,6 +1313,12 @@ This can indicate that a dependency has been compromised. Please carefully verif
 
 If the artifacts are trustworthy, you will need to update the gradle/verification-metadata.xml file by following the instructions at ${docsUrl}"""
         }
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
 
         where:
         terse << [true, false]
@@ -1244,7 +1352,6 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
 
     }
 
-    @Unroll
     def "can mix globally trusted keys and artifact specific keys (trust artifact key = #addLocalKey)"() {
         def keyring = newKeyRing()
         keyServerFixture.registerPublicKey(keyring.publicKey)
@@ -1289,6 +1396,12 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
   - On artifact foo-1.0.pom (org:foo:1.0) in repository 'maven': Artifact was signed with key '${pkId}' (test-user@gradle.com) and passed verification but the key isn't in your trusted keys list.
 
 If the artifacts are trustworthy, you will need to update the gradle/verification-metadata.xml file by following the instructions at ${docsUrl}"""
+            if (GradleContextualExecuter.isConfigCache()) {
+                failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+            }
         }
 
         where:
@@ -1301,7 +1414,7 @@ If the artifacts are trustworthy, you will need to update the gradle/verificatio
         def pkId = toLongIdHexString(keyring.publicKey.keyID)
 
         createMetadataFile {
-            keyServer(keyServerFixture.uri)
+            disableKeyServers()
             verifySignatures()
             addTrustedKey("org:foo:1.0", pkId)
             addTrustedKey("org:foo:1.0", pkId, "pom", "pom")
@@ -1337,7 +1450,6 @@ ${verifFile.getText('us-ascii')}""", 'us-ascii')
         'ASCII with header' | 'keys'    | 'some comment showing we can have arbitrary text'
     }
 
-    @Unroll
     @UnsupportedWithConfigurationCache
     def "can verify dependencies in a buildFinished hook (terse output=#terse)"() {
         createMetadataFile {
@@ -1439,6 +1551,7 @@ One artifact failed verification: foo-1.0.jar (org:foo:1.0) from repository mave
             addTrustedKey("org:foo:1.0", validPublicKeyHexString)
             addTrustedKey("org:foo:1.0", validPublicKeyHexString, "pom", "pom")
         }
+        serveValidKey()
 
         given:
         javaLibrary()
@@ -1454,6 +1567,106 @@ One artifact failed verification: foo-1.0.jar (org:foo:1.0) from repository mave
         """
 
         when:
+        fails ":compileJava"
+
+        then:
+        failure.assertHasCause """Dependency verification failed for configuration ':compileClasspath'
+2 artifacts failed verification:
+  - foo-1.0.jar (org:foo:1.0) from repository maven
+  - foo-1.0.pom (org:foo:1.0) from repository maven
+This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums. Key servers are disabled, this can indicate that you need to update the local keyring with the missing keys."""
+        if (GradleContextualExecuter.isConfigCache()) {
+            failure.assertThatDescription(containsText("""Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`: value 'configuration ':compileClasspath'' failed to visit file collection"""))
+        }
+    }
+
+    @ToBeFixedForConfigurationCache
+    @Issue("https://github.com/gradle/gradle/issues/19663")
+    def "fails when disabling reaching out to key servers after previous successful build and no key rings file"() {
+        given:
+        createMetadataFile {
+            keyServer(keyServerFixture.uri)
+            verifySignatures()
+            addTrustedKey("org:foo:1.0", validPublicKeyHexString)
+            addTrustedKey("org:foo:1.0", validPublicKeyHexString, "pom", "pom")
+        }
+        javaLibrary()
+        uncheckedModule("org", "foo", "1.0") {
+            withSignature {
+                signAsciiArmored(it)
+            }
+        }
+        buildFile << """
+            dependencies {
+                implementation "org:foo:1.0"
+            }
+        """
+        serveValidKey()
+
+        when:
+        succeeds ":compileJava"
+
+        then:
+        noExceptionThrown()
+
+        when:
+        replaceMetadataFile {
+            keyServer(keyServerFixture.uri)
+            verifySignatures()
+            addTrustedKey("org:foo:1.0", validPublicKeyHexString)
+            addTrustedKey("org:foo:1.0", validPublicKeyHexString, "pom", "pom")
+            disableKeyServers()
+        }
+        fails ":compileJava"
+
+        then:
+        failure.assertHasCause """Dependency verification failed for configuration ':compileClasspath'
+2 artifacts failed verification:
+  - foo-1.0.jar (org:foo:1.0) from repository maven
+  - foo-1.0.pom (org:foo:1.0) from repository maven
+This can indicate that a dependency has been compromised. Please carefully verify the signatures and checksums. Key servers are disabled, this can indicate that you need to update the local keyring with the missing keys."""
+    }
+
+    @ToBeFixedForConfigurationCache
+    @Issue("https://github.com/gradle/gradle/issues/18440")
+    def "fails on a bad verification file change after previous successful build when key servers are disabled"() {
+        def keyring = newKeyRing()
+        def pkId = toLongIdHexString(keyring.publicKey.keyID)
+
+        createMetadataFile {
+            disableKeyServers()
+            verifySignatures()
+            addTrustedKey("org:foo:1.0", pkId)
+            addTrustedKey("org:foo:1.0", pkId, "pom", "pom")
+        }
+
+        def verificationFile = file("gradle/verification-keyring.keys")
+        keyring.writePublicKeyRingTo(verificationFile)
+
+        given:
+        javaLibrary()
+        uncheckedModule("org", "foo", "1.0") {
+            withSignature {
+                keyring.sign(it)
+            }
+        }
+        buildFile << """
+            dependencies {
+                implementation "org:foo:1.0"
+            }
+        """
+
+        when:
+        succeeds ":compileJava"
+
+        then:
+        noExceptionThrown()
+
+        when:
+        verificationFile.delete()
         fails ":compileJava"
 
         then:

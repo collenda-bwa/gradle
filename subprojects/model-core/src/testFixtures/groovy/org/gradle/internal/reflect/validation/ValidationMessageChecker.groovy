@@ -259,12 +259,26 @@ trait ValidationMessageChecker {
     @ValidationTestFor(
         ValidationProblemId.CANNOT_WRITE_OUTPUT
     )
-    String cannotWriteToFile(@DelegatesTo(value = CannotWriteToFile, strategy = Closure.DELEGATE_FIRST) Closure<?> spec = {}) {
+    String cannotWriteFileToDirectory(@DelegatesTo(value = CannotWriteToFile, strategy = Closure.DELEGATE_FIRST) Closure<?> spec = {}) {
         def config = display(CannotWriteToFile, 'cannot_write_output', spec)
-        config.description("is not writable because '${config.file}' ${config.reason}")
+
+        def cannotWriteToFile = config.description("is not writable because '${config.file}' ${config.reason}")
             .reason("Cannot write a file to a location pointing at a directory")
             .solution("Configure '${config.property}' to point to a file, not a directory")
-            .render()
+            .solution("Annotate '${config.property}' with @OutputDirectory instead of @OutputFiles.")
+        cannotWriteToFile.render()
+    }
+
+    @ValidationTestFor(
+        ValidationProblemId.CANNOT_WRITE_OUTPUT
+    )
+    String cannotCreateParentDirectories(@DelegatesTo(value = CannotWriteToFile, strategy = Closure.DELEGATE_FIRST) Closure<?> spec = {}) {
+        def config = display(CannotWriteToFile, 'cannot_write_output', spec)
+
+        def cannotWriteToFile = config.description("is not writable because '${config.file}' ${config.reason}")
+            .reason("Cannot create parent directories that are existing as file")
+            .solution("Configure '${config.property}' to point to the correct location")
+        cannotWriteToFile.render()
     }
 
     @ValidationTestFor(
@@ -363,8 +377,14 @@ trait ValidationMessageChecker {
         def config = display(NotCacheableWithoutReason, "disable_caching_by_default", spec)
         config.description("must be annotated either with ${config.cacheableAnnotation} or with @DisableCachingByDefault.")
             .reason("The ${config.workType} author should make clear why a ${config.workType} is not cacheable.")
-            .solution("Add @DisableCachingByDefault(because = ...) or ${config.cacheableAnnotation}.")
-            .render()
+            .solution("Add @DisableCachingByDefault(because = ...)")
+            .solution("Add ${config.cacheableAnnotation}.")
+
+        config.otherAnnotations.each { annotation ->
+            config.solution("Add ${annotation}.")
+        }
+
+        config.render()
     }
 
     @ValidationTestFor(
@@ -872,6 +892,7 @@ trait ValidationMessageChecker {
     static class NotCacheableWithoutReason extends ValidationMessageDisplayConfiguration<NotCacheableWithoutReason> {
         String workType
         String cacheableAnnotation
+        List<String> otherAnnotations = []
 
         NotCacheableWithoutReason(ValidationMessageChecker checker) {
             super(checker)
@@ -880,6 +901,7 @@ trait ValidationMessageChecker {
         NotCacheableWithoutReason noReasonOnTask() {
             workType = "task"
             cacheableAnnotation = "@CacheableTask"
+            otherAnnotations.add("@UntrackedTask(because = ...)")
             this
         }
 

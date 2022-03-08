@@ -20,12 +20,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.configurationcache.AbstractConfigurationCacheIntegrationTest
 import spock.lang.Issue
-import spock.lang.Unroll
 
 import java.util.function.Supplier
 
 class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheIntegrationTest {
-    @Unroll
     def "reports build logic reading a system property set #mechanism.description via the Java API"() {
         buildFile << """
             // not declared
@@ -46,7 +44,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
     }
 
     @Issue("https://github.com/gradle/gradle/issues/13569")
-    @Unroll
     def "reports build logic reading system properties using GString parameters - #expression"() {
         buildFile << """
             def ci = "ci"
@@ -79,7 +76,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
     }
 
     @Issue("https://github.com/gradle/gradle/issues/13652")
-    @Unroll
     def "reports build logic reading system properties with null defaults - #expression"() {
         buildFile << """
             println "CI1 = " + $expression
@@ -107,7 +103,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         'Long.getLong("CI1", null)'       | "123"     | "123"
     }
 
-    @Unroll
     def "reports buildSrc build logic and tasks reading a system property set #mechanism.description via the Java API"() {
         def buildSrcBuildFile = file("buildSrc/build.gradle")
         buildSrcBuildFile << """
@@ -131,7 +126,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         mechanism << SystemPropertyInjection.all("CI", "false")
     }
 
-    @Unroll
     def "build logic can read system property with no value without declaring access and loading fails when value set using #mechanism.description"() {
         file("buildSrc/src/main/java/SneakyPlugin.java") << """
             import ${Project.name};
@@ -174,7 +168,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         mechanism << SystemPropertyInjection.all("CI", "false")
     }
 
-    @Unroll
     def "build logic can read system property with a default using #read.javaExpression without declaring access"() {
         file("buildSrc/src/main/java/SneakyPlugin.java") << """
             import ${Project.name};
@@ -230,7 +223,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         SystemPropertyRead.longGetLongWithLongDefault("CI", 123)                    | "123"        | "456"
     }
 
-    @Unroll
     def "build logic can read standard system property #prop without declaring access"() {
         file("buildSrc/src/main/java/SneakyPlugin.java") << """
             import ${Project.name};
@@ -375,7 +367,6 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         outputContains("value = value")
     }
 
-    @Unroll
     def "reports build logic reading an environment value using #envVarRead.groovyExpression"() {
         buildFile << """
             println("CI = " + ${envVarRead.groovyExpression})
@@ -409,6 +400,7 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
         EnvVariableRead.getEnv("CI")                        | "null"     | "defined" | "defined"
         EnvVariableRead.getEnvGet("CI")                     | "null"     | "defined" | "defined"
         EnvVariableRead.getEnvGetOrDefault("CI", "default") | "default"  | "defined" | "defined"
+        EnvVariableRead.getEnvContainsKey("CI")             | "false"    | "defined" | "true"
     }
 
     def "reports build logic reading environment variables with getenv(String) using GString parameters"() {
@@ -438,5 +430,125 @@ class UndeclaredBuildInputsIntegrationTest extends AbstractConfigurationCacheInt
             withInput("Build file 'build.gradle': environment variable 'CI1'")
         }
         outputContains("CI1 = defined")
+    }
+
+    def "reports build logic reading files in #title"() {
+        def configurationCache = newConfigurationCacheFixture()
+        def inputFile = testDirectory.file("testInput.txt") << "some test input"
+
+        testDirectory.file(buildFileName) << code
+
+        when:
+        configurationCacheRun(":help")
+
+        then: "initial run has no errors but detects input"
+        configurationCache.assertStateStored()
+        problems.assertResultHasProblems(result) {
+            withInput("Build file '$buildFileName': file 'testInput.txt'")
+        }
+
+        when:
+        configurationCacheRun(":help")
+
+        then: "without changes in file the cache is reused"
+        configurationCache.assertStateLoaded()
+
+        when:
+        inputFile << "some other input"
+        configurationCacheRun(":help")
+
+        then: "changes in the file invalidate the cache"
+        configurationCache.assertStateStored()
+
+        where:
+        title                                    | buildFileName      | code
+        "Groovy with FileInputStream"            | "build.gradle"     | readFileWithFileInputStreamInGroovy()
+        "Groovy with FileInputStream descendant" | "build.gradle"     | readFileWithFileInputStreamDescendantInGroovy()
+        "Kotlin with FileInputStream"            | "build.gradle.kts" | readFileWithFileInputStreamInKotlin()
+        "Kotlin with FileInputStream descendant" | "build.gradle.kts" | readFileWithFileInputStreamDescendantInKotlin()
+    }
+
+    def "reading file in buildSrc task is not tracked"() {
+        def configurationCache = newConfigurationCacheFixture()
+        testDirectory.file("buildSrc/testInput.txt") << "some test input"
+
+        testDirectory.file("buildSrc/build.gradle") << """
+            def inputFile = file("testInput.txt")
+            def echoTask = tasks.register("echo") {
+                doLast {
+                    def fin = new FileInputStream(inputFile)
+                    try {
+                        System.out.bytes = fin.bytes
+                    } finally {
+                        fin.close()
+                    }
+                }
+            }
+            tasks.named("classes").configure {
+                dependsOn(echoTask)
+            }
+        """
+
+        buildFile << ""
+
+        when:
+        configurationCacheRun(":help")
+
+        then:
+        configurationCache.assertStateStored()
+        problems.assertResultHasProblems(result) {
+            withNoInputs()
+        }
+        outputContains("some test input")
+    }
+
+    private static String readFileWithFileInputStreamInGroovy() {
+        return """
+            def fin = new FileInputStream(file("testInput.txt"))
+            try {
+                System.out.bytes = fin.bytes
+            } finally {
+                fin.close()
+            }
+        """
+    }
+
+    private static String readFileWithFileInputStreamDescendantInGroovy() {
+        return """
+            class TestInputStream extends FileInputStream {
+                TestInputStream(String path) {
+                    super(new File(path))
+                }
+            }
+
+            def fin = new TestInputStream(file("testInput.txt").path)
+            try {
+                System.out.bytes = fin.bytes
+            } finally {
+                fin.close()
+            }
+        """
+    }
+
+    private static String readFileWithFileInputStreamInKotlin() {
+        return """
+            import java.io.*
+
+            FileInputStream(file("testInput.txt")).use {
+                it.copyTo(System.out)
+            }
+        """
+    }
+
+    private static String readFileWithFileInputStreamDescendantInKotlin() {
+        return """
+            import java.io.*
+
+            class TestInputStream(path: String) : FileInputStream(file(path)) {}
+
+            TestInputStream("testInput.txt").use {
+                it.copyTo(System.out)
+            }
+        """
     }
 }

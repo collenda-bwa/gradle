@@ -17,6 +17,7 @@
 package org.gradle.smoketests
 
 import org.apache.commons.io.FileUtils
+import org.gradle.api.JavaVersion
 import org.gradle.initialization.StartParameterBuildOptions.ConfigurationCacheMaxProblemsOption
 import org.gradle.initialization.StartParameterBuildOptions.ConfigurationCacheOption
 import org.gradle.initialization.StartParameterBuildOptions.ConfigurationCacheProblemsOption
@@ -45,11 +46,10 @@ import static org.gradle.test.fixtures.server.http.MavenHttpPluginRepository.PLU
 abstract class AbstractSmokeTest extends Specification {
 
     protected static final AndroidGradlePluginVersions AGP_VERSIONS = new AndroidGradlePluginVersions()
+    protected static final String AGP_NO_CC_ITERATION_MATCHER = ".*agp=4\\..*"
+
     protected static final KotlinGradlePluginVersions KOTLIN_VERSIONS = new KotlinGradlePluginVersions()
-    protected static final String AGP_4_0_ITERATION_MATCHER = ".*agp=4\\.0\\..*"
-    protected static final String AGP_4_1_ITERATION_MATCHER = ".*agp=4\\.1\\..*"
-    protected static final String AGP_4_2_ITERATION_MATCHER = ".*agp=4\\.2\\..*"
-    protected static final String AGP_7_ITERATION_MATCHER = ".*agp=7\\..*"
+    protected static final String KGP_NO_CC_ITERATION_MATCHER = ".*(kotlin=1\\.3\\.|kotlin=1\\.4\\.[01]).*"
 
     static class TestedVersions {
         /**
@@ -110,7 +110,10 @@ abstract class AbstractSmokeTest extends Specification {
         })
 
         // https://plugins.gradle.org/plugin/org.gretty
-        static gretty = "3.0.6"
+        static gretty = [
+            [version: "3.0.7", servletContainer: "jetty9.4", javaMinVersion: JavaVersion.VERSION_1_8],
+            [version: "4.0.0", servletContainer: "jetty11", javaMinVersion: JavaVersion.VERSION_11]
+        ]
 
         // https://plugins.gradle.org/plugin/org.ajoberstar.grgit
         static grgit = "4.1.0"
@@ -125,7 +128,7 @@ abstract class AbstractSmokeTest extends Specification {
         static errorProne = "2.0.2"
 
         // https://plugins.gradle.org/plugin/com.google.protobuf
-        static protobufPlugin = "0.8.17"
+        static protobufPlugin = "0.8.18"
         static protobufTools = "3.17.1"
 
         // https://plugins.gradle.org/plugin/org.gradle.test-retry
@@ -157,7 +160,7 @@ abstract class AbstractSmokeTest extends Specification {
         static detekt = Versions.of("1.18.1")
 
         // https://plugins.gradle.org/plugin/com.diffplug.spotless
-        static spotless = Versions.of("5.16.0")
+        static spotless = Versions.of("6.0.0")
 
         // https://plugins.gradle.org/plugin/com.google.cloud.tools.jib
         static jib = Versions.of("3.1.4")
@@ -167,7 +170,7 @@ abstract class AbstractSmokeTest extends Specification {
 
         // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.allopen
         // https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.spring
-        static kotlinPlugins = Versions.of("1.4.21-2", "1.4.31", "1.5.31", "1.6.0-RC")
+        static kotlinPlugins = Versions.of("1.4.21-2", "1.4.31", "1.5.31", "1.6.0", "1.6.10")
 
         // https://plugins.gradle.org/plugin/com.moowork.grunt
         // https://plugins.gradle.org/plugin/com.moowork.gulp
@@ -319,6 +322,9 @@ abstract class AbstractSmokeTest extends Specification {
         if (AGP_VERSIONS.isAgpNightly(agpVersion)) {
             def init = AGP_VERSIONS.createAgpNightlyRepositoryInitScript()
             extraArgs += ["-I", init.canonicalPath]
+        }
+        if (agpVersion.startsWith("7.2") && JavaVersion.current().java9Compatible) {
+            runner = runner.withJvmArguments('--add-opens', 'java.logging/java.util.logging=ALL-UNNAMED')
         }
         return runner.withArguments([runner.arguments, extraArgs].flatten())
     }
