@@ -944,8 +944,9 @@ public class StartParameter implements LoggingConfiguration, ParallelismConfigur
      * If true, will show welcome message.
      *
      * @return true if welcome message should be shown
-     * @since 7.4
+     * @since 7.5
      */
+    @Incubating
     public boolean isShowWelcomeMessage() {
         return showWelcomeMessage;
     }
@@ -954,8 +955,9 @@ public class StartParameter implements LoggingConfiguration, ParallelismConfigur
      * Controls weather gradle welcome message will be shown on startup.
      *
      * @param showWelcomeMessage set to true to show welcome message
-     * @since 7.4
+     * @since 7.5
      */
+    @Incubating
     public void setShowWelcomeMessage(boolean showWelcomeMessage) {
         this.showWelcomeMessage = showWelcomeMessage;
     }
