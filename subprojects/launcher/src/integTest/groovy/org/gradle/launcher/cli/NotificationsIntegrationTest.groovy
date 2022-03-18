@@ -69,9 +69,18 @@ ${getReleaseNotesDetailsMessage(distribution.version)}
         markerFile.exists()
     }
 
+    def "show reasonable error message for invalid configuration property"() {
+        when:
+        file("gradle.properties") << "org.gradle.welcome=foo"
+        fails()
+
+        then:
+        errorOutput.contains("Option org.gradle.welcome doesn't accept value 'foo'. Possible values are [ONCE, NEVER]")
+    }
+
     def "abort rendering welcome message using configuration property"() {
         when:
-        file("gradle.properties") << "org.gradle.welcome-message=false"
+        file("gradle.properties") << "org.gradle.welcome=never"
         succeeds()
 
         then:

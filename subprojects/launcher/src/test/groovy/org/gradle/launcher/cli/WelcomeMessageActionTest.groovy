@@ -199,7 +199,7 @@ For more details see https://docs.gradle.org/42.0/release-notes.html''')
 
     def "does not print anything if gradle property is set to hide welcome message"() {
         given:
-        properties.getProperties() >> [(StartParameterBuildOptions.WelcomeMessageOption.PROPERTY_NAME) : "false"]
+        properties.getProperties() >> [(StartParameterBuildOptions.WelcomeMessageOption.PROPERTY_NAME) : "never"]
 
         def action = createWelcomeMessage(null)
 
